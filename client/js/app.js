@@ -3,10 +3,13 @@ const $ = require('jquery');
 // Set jQuery in the window
 window.$ = window.jQuery = $;
 
-const app = document.querySelector('#app');
+const ItemListView = require("./views/ItemListView");
 
-// Set greeting
-const greeting = document.createElement('h2');
-greeting.innerText = 'Express Backbone Starter App!';
+const view = new ItemListView({items: [
+  {name: "item1", quantity: 1},
+  {name: "item2", quantity: 2},
+  {name: "item3", quantity: 3}
+]});
+const app = $("#app");
 
-app.appendChild(greeting);
+app.append(view.render().el);
