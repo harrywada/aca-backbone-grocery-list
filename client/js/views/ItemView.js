@@ -5,16 +5,12 @@ const ItemView = Backbone.View.extend({
   el: "<li></li>",
 
   template: _.template(`
-    <span>Item: <%= item.name %></span><br>
-    <span>Quantity: <%= item.quantity %></span><br>
+    <span>Item: <%= item.get("name") %></span><br>
+    <span>Quantity: <%= item.get("quantity") %></span><br>
   `),
 
-  initialize(options){
-    this.item = options.item;
-  },
-
   render(){
-    this.$el.append(this.template({item: this.item}));
+    this.$el.append(this.template({item: this.model}));
     return this;
   }
 });

@@ -4,12 +4,18 @@ const $ = require('jquery');
 window.$ = window.jQuery = $;
 
 const ItemListView = require("./views/ItemListView");
+const ItemCollection = require("./collections/ItemCollection");
 
-const view = new ItemListView({items: [
-  {name: "item1", quantity: 1},
-  {name: "item2", quantity: 2},
-  {name: "item3", quantity: 3}
-]});
-const app = $("#app");
+const items = new ItemCollection();
+items.fetch({
+  success(){
+    const view = new ItemListView({collection: items});
+    const app = $("#app");
 
-app.append(view.render().el);
+    app.append(view.render().el);
+  },
+
+  error(){
+    alert("could not fetch items from database");
+  }
+});

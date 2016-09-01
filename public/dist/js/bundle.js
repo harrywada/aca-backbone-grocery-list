@@ -5,15 +5,47 @@ const $ = require('jquery');
 window.$ = window.jQuery = $;
 
 const ItemListView = require("./views/ItemListView");
+const ItemCollection = require("./collections/ItemCollection");
 
-const view = new ItemListView({ items: [{ name: "item1", quantity: 1 }, { name: "item2", quantity: 2 }, { name: "item3", quantity: 3 }] });
-const app = $("#app");
+const items = new ItemCollection();
+items.fetch({
+  success() {
+    const view = new ItemListView({ collection: items });
+    const app = $("#app");
 
-app.append(view.render().el);
+    app.append(view.render().el);
+  },
 
-},{"./views/ItemListView":2,"jquery":5}],2:[function(require,module,exports){
+  error() {
+    alert("could not fetch items from database");
+  }
+});
+
+},{"./collections/ItemCollection":2,"./views/ItemListView":4,"jquery":7}],2:[function(require,module,exports){
+const Backbone = require("backbone");
+const ItemModel = require("../models/ItemModel");
+
+const ItemCollection = Backbone.Collection.extend({
+  url: "/items",
+  model: ItemModel
+});
+
+module.exports = ItemCollection;
+
+},{"../models/ItemModel":3,"backbone":6}],3:[function(require,module,exports){
+const Backbone = require("backbone");
+
+const ItemModel = Backbone.Model.extend({
+  idAttribute: "_id",
+  urlRoot: "/items"
+});
+
+module.exports = ItemModel;
+
+},{"backbone":6}],4:[function(require,module,exports){
 const Backbone = require("backbone");
 const ItemView = require("./ItemView");
+const ItemModel = require("../models/ItemModel");
 
 const ItemListView = Backbone.View.extend({
   el: `
@@ -32,34 +64,39 @@ const ItemListView = Backbone.View.extend({
     </div>
   `,
 
-  initialize(options) {
-    this.items = options.items;
-  },
-
   events: {
     "submit form": "handleFormSubmit"
   },
 
   handleFormSubmit(e) {
     const form = $(e.target);
-    const item = {
+
+    const newItem = new ItemModel({
       name: form.find("input[name=\"name\"]").val(),
       quantity: form.find("input[name=\"quantity\"]").val()
-    };
+    });
 
-    this.items.push(item);
+    newItem.save(null, {
+      success: () => {
+        this.collection.add(newItem);
 
-    form.find("input[type=\"text\"]").val("");
-    form.find("input[type=\"number\"]").val("");
-    this.render();
+        form.find("input[type=\"text\"]").val("");
+        form.find("input[type=\"number\"]").val("");
+        this.render();
+      },
+
+      error: () => {
+        alert("could not save item");
+      }
+    });
 
     e.preventDefault();
   },
 
   render() {
     this.$el.find("ul").html("");
-    this.items.forEach(item => {
-      const itemView = new ItemView({ item: item });
+    this.collection.forEach(item => {
+      const itemView = new ItemView({ model: item });
       this.$el.find("ul").append(itemView.render().el);
     });
 
@@ -69,7 +106,7 @@ const ItemListView = Backbone.View.extend({
 
 module.exports = ItemListView;
 
-},{"./ItemView":3,"backbone":4}],3:[function(require,module,exports){
+},{"../models/ItemModel":3,"./ItemView":5,"backbone":6}],5:[function(require,module,exports){
 const _ = require("lodash");
 const Backbone = require("backbone");
 
@@ -77,23 +114,19 @@ const ItemView = Backbone.View.extend({
   el: "<li></li>",
 
   template: _.template(`
-    <span>Item: <%= item.name %></span><br>
-    <span>Quantity: <%= item.quantity %></span><br>
+    <span>Item: <%= item.get("name") %></span><br>
+    <span>Quantity: <%= item.get("quantity") %></span><br>
   `),
 
-  initialize(options) {
-    this.item = options.item;
-  },
-
   render() {
-    this.$el.append(this.template({ item: this.item }));
+    this.$el.append(this.template({ item: this.model }));
     return this;
   }
 });
 
 module.exports = ItemView;
 
-},{"backbone":4,"lodash":6}],4:[function(require,module,exports){
+},{"backbone":6,"lodash":8}],6:[function(require,module,exports){
 (function (global){
 //     Backbone.js 1.3.3
 
@@ -2018,7 +2051,7 @@ module.exports = ItemView;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"jquery":5,"underscore":7}],5:[function(require,module,exports){
+},{"jquery":7,"underscore":9}],7:[function(require,module,exports){
 /*eslint-disable no-unused-vars*/
 /*!
  * jQuery JavaScript Library v3.1.0
@@ -12094,7 +12127,7 @@ if ( !noGlobal ) {
 return jQuery;
 } );
 
-},{}],6:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -28832,7 +28865,7 @@ return jQuery;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 //     Underscore.js 1.8.3
 //     http://underscorejs.org
 //     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
