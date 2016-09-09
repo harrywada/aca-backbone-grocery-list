@@ -1,5 +1,6 @@
 const Backbone = require("backbone");
 const ItemView = require("./ItemView");
+const ItemCollection = require("../collections/ItemCollection");
 const ItemModel = require("../models/ItemModel");
 
 const ItemListView = Backbone.View.extend({
@@ -19,6 +20,14 @@ const ItemListView = Backbone.View.extend({
     </div>
   `,
 
+  initialize(){
+    this.collection = new ItemCollection();
+
+    this.listenTo(this.collection, "update", () => {
+      this.render();
+    });
+  },
+
   events:{
     "submit form": "handleFormSubmit"
   },
@@ -30,21 +39,10 @@ const ItemListView = Backbone.View.extend({
       name: form.find("input[name=\"name\"]").val(),
       quantity: form.find("input[name=\"quantity\"]").val()
     });
+    this.collection.add(newItem).save();
 
-    newItem.save(null, {
-      success: () => {
-        this.collection.add(newItem);
-
-        form.find("input[type=\"text\"]").val("");
-        form.find("input[type=\"number\"]").val("");
-        this.render();
-      },
-
-      error: () => {
-        alert("could not save item");
-      }
-    });
-
+    form.find("input[type=\"text\"]").val("");
+    form.find("input[type=\"number\"]").val("");
     e.preventDefault();
   },
 

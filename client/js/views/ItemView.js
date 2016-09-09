@@ -9,8 +9,12 @@ const ItemView = Backbone.View.extend({
     <span>Quantity: <%= item.get("quantity") %></span><br>
   `),
 
+  initialize(){
+    this.listenTo(this.model, "sync", this.render);
+  },
+
   render(){
-    this.$el.append(this.template({item: this.model}));
+    this.$el.html(this.template({item: this.model}));
     return this;
   }
 });

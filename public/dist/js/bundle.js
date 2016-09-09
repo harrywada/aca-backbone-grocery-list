@@ -5,29 +5,23 @@ const $ = require('jquery');
 window.$ = window.jQuery = $;
 
 const ItemListView = require("./views/ItemListView");
-const ItemCollection = require("./collections/ItemCollection");
 
-const items = new ItemCollection();
-items.fetch({
-  success() {
-    const view = new ItemListView({ collection: items });
-    const app = $("#app");
+const view = new ItemListView();
+const app = $("#app");
 
-    app.append(view.render().el);
-  },
+app.append(view.render().el);
 
-  error() {
-    alert("could not fetch items from database");
-  }
-});
-
-},{"./collections/ItemCollection":2,"./views/ItemListView":4,"jquery":7}],2:[function(require,module,exports){
+},{"./views/ItemListView":4,"jquery":7}],2:[function(require,module,exports){
 const Backbone = require("backbone");
 const ItemModel = require("../models/ItemModel");
 
 const ItemCollection = Backbone.Collection.extend({
   url: "/items",
-  model: ItemModel
+  model: ItemModel,
+
+  initialize() {
+    this.fetch();
+  }
 });
 
 module.exports = ItemCollection;
@@ -45,6 +39,7 @@ module.exports = ItemModel;
 },{"backbone":6}],4:[function(require,module,exports){
 const Backbone = require("backbone");
 const ItemView = require("./ItemView");
+const ItemCollection = require("../collections/ItemCollection");
 const ItemModel = require("../models/ItemModel");
 
 const ItemListView = Backbone.View.extend({
@@ -64,6 +59,14 @@ const ItemListView = Backbone.View.extend({
     </div>
   `,
 
+  initialize() {
+    this.collection = new ItemCollection();
+
+    this.listenTo(this.collection, "update", () => {
+      this.render();
+    });
+  },
+
   events: {
     "submit form": "handleFormSubmit"
   },
@@ -75,21 +78,10 @@ const ItemListView = Backbone.View.extend({
       name: form.find("input[name=\"name\"]").val(),
       quantity: form.find("input[name=\"quantity\"]").val()
     });
+    this.collection.add(newItem).save();
 
-    newItem.save(null, {
-      success: () => {
-        this.collection.add(newItem);
-
-        form.find("input[type=\"text\"]").val("");
-        form.find("input[type=\"number\"]").val("");
-        this.render();
-      },
-
-      error: () => {
-        alert("could not save item");
-      }
-    });
-
+    form.find("input[type=\"text\"]").val("");
+    form.find("input[type=\"number\"]").val("");
     e.preventDefault();
   },
 
@@ -106,7 +98,7 @@ const ItemListView = Backbone.View.extend({
 
 module.exports = ItemListView;
 
-},{"../models/ItemModel":3,"./ItemView":5,"backbone":6}],5:[function(require,module,exports){
+},{"../collections/ItemCollection":2,"../models/ItemModel":3,"./ItemView":5,"backbone":6}],5:[function(require,module,exports){
 const _ = require("lodash");
 const Backbone = require("backbone");
 
@@ -118,8 +110,12 @@ const ItemView = Backbone.View.extend({
     <span>Quantity: <%= item.get("quantity") %></span><br>
   `),
 
+  initialize() {
+    this.listenTo(this.model, "sync", this.render);
+  },
+
   render() {
-    this.$el.append(this.template({ item: this.model }));
+    this.$el.html(this.template({ item: this.model }));
     return this;
   }
 });
