@@ -7,7 +7,7 @@ const ItemModel = Backbone.Model.extend({
   initialize(){
     this.on("change", function(){
       this.save();
-    }
+    });
   }
 });
 
